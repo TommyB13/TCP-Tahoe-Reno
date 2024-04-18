@@ -1,4 +1,5 @@
 import socket
+import random
 
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,8 +28,11 @@ def main():
                     print(f"Received packet with SEQ: {seq_num}", flush=True)
                     ack_response = seq_num + len(data_content)
                     response = f"SEQ:{seq_num}|ACK:{ack_response}|DATA:".encode()
-                    connection_socket.send(response)
-                    print(f"Sent ACK: {ack_response}", flush=True)
+                    if(random.randint(0, 10) < 8):
+                        connection_socket.send(response)
+                        print(f"Sent ACK: {ack_response}", flush=True)
+                    else:
+                        print(f"Packet loss, no ACK sent.", flush=True)
                     
         finally:
             connection_socket.close()

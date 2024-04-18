@@ -1,7 +1,7 @@
 import socket
 import sys
 import random
-from time import sleep
+import threading
 
 class TCPClient:
     def __init__(self, filename):
@@ -18,6 +18,8 @@ class TCPClient:
         self.packet_size = 1024
         self.dup_ack_count = 0
         self.congestion_detected = False
+        self.sent_packets = {}  # Dictionary to store sent packets and their associated timers
+        self.lock = threading.Lock()
 
     def send_file(self):
         with open(self.filename, 'rb') as file:
@@ -31,22 +33,20 @@ class TCPClient:
                 segment = data[start:end]
                 self.seq_number = end
                 packet = f"SEQ:{self.seq_number}|ACK:{self.ack_number}|DATA:".encode() + segment
-                if(random.randint(0, 10) < 9):
-                    self.client_socket.send(packet)
-                    print(f"Sent packet SEQ: {self.seq_number}")
-                else:
-                    print(f"Packet loss, packet with SEQ: {self.seq_number} lost in transit.")
-                    sleep(2);  # Simulate packet loss
-                    continue  # Skip updating cwnd and ssthresh on packet loss
+                
+                # Send packet and start timer
+                self.client_socket.send(packet)
+                self.lock.acquire()
+                self.sent_packets[self.seq_number] = threading.Timer(self.timeout, self.handle_timeout, args=[self.seq_number, packet])
+                self.sent_packets[self.seq_number].start()
+                self.lock.release()
+                print(f"Sent packet SEQ: {self.seq_number}")
+                
+                idx_packet += 1  # Move to the next segment
 
-                if self.wait_for_ack():
-                    print(f"Received correct ACK: {self.ack_number}")
-                    idx_packet += 1  # Successfully move to the next segment
-                else:
-                    self.ssthresh = max(self.cwnd / 2, 1)
-                    self.cwnd = 1
-                    idx_packet = idx_packet - self.cwnd + 1 if idx_packet > 0 else 0
-                    print(f"Setting sshtresh to: {self.ssthresh} and cwnd to: {self.cwnd} due to timeout or incorrect ACK.")
+        # Wait for ACKs of all sent packets before closing connection
+        for seq_number, timer in self.sent_packets.items():
+            timer.join()
 
     def wait_for_ack(self):
         try:
@@ -82,7 +82,21 @@ class TCPClient:
             print(f"Unexpected error: {e}")
         return False
 
+    def handle_timeout(self, seq_number, packet):
+        print(f"Timeout occurred for packet with SEQ: {seq_number}. Retransmitting...")
+        # Resend packet
+        self.client_socket.send(packet)
+        # Restart timer
+        self.lock.acquire()
+        self.sent_packets[seq_number].cancel()
+        self.sent_packets[seq_number] = threading.Timer(self.timeout, self.handle_timeout, args=[seq_number, packet])
+        self.sent_packets[seq_number].start()
+        self.lock.release()
+
     def close(self):
+        # Cancel all timers
+        for seq_number, timer in self.sent_packets.items():
+            timer.cancel()
         self.client_socket.close()
         print("Connection closed.")
 
