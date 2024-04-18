@@ -44,6 +44,7 @@ class TCPClient:
                 if(random.randint(0, 10) < 9):
                     self.client_socket.send(packet)
                     self.packets_sent += 1
+                    self.total_bytes_sent += len(segment)
                     print(Fore.LIGHTGREEN_EX + f"Sent packet SEQ: {self.seq_number}" + Style.RESET_ALL)
 
                     # Adjust congestion window
