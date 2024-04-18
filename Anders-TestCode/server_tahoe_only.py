@@ -48,7 +48,7 @@ def main():
                             cwnd = min(cwnd * 2, 64)  # Slow start
                         else:
                             cwnd += 1  # Congestion avoidance
-                    """
+                    
                     # Detect and simulate three duplicate ACKs
                     if ack_num < seq_num and ack_num != last_ack_seq_num:
                         duplicate_ack_count += 1
@@ -60,11 +60,11 @@ def main():
                             duplicate_ack_count = 0  # Reset duplicate ACK count
                     else:
                         duplicate_ack_count = 0  # Reset duplicate ACK count`
-"""
+
 
                     last_ack_seq_num = ack_num  # Update last acknowledged sequence number
-                    
-                    # Detect and simulate three duplicate ACKs
+
+                    # Detect and simulate three duplicate ACKs... USE FOR DEMONSTRATION OF DUPLICATE ACK ONLY
                     if ack_num == last_ack_seq_num:
                         duplicate_ack_count += 1
                         if duplicate_ack_count == 3:
