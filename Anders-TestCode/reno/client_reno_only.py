@@ -1,6 +1,7 @@
 import socket
 import sys
 import random
+import time
 from time import sleep
 from colorama import Fore, Back, Style
 
@@ -21,8 +22,14 @@ class TCPClient:
         self.congestion_detected = False
         self.packets_sent = 0
         self.packets_lost = 0
+        self.start_time = 0
+        self.end_time = 0
+        self.total_bytes_sent = 0
 
     def send_file(self):
+        self.start_time = time.time()  # Record start time
+        self.total_bytes_sent = 0
+
         with open(self.filename, 'rb') as file:
             data = file.read()
             total_segments = len(data) // self.packet_size + (len(data) % self.packet_size != 0)
@@ -62,6 +69,13 @@ class TCPClient:
                     self.packets_lost += 1
                     print(f"Setting sshtresh to: {self.ssthresh} and cwnd to: {self.cwnd} due to timeout or incorrect ACK.")
 
+        self.end_time = time.time()  # Record end time
+        self.transmission_time = self.end_time - self.start_time
+        self.throughput = self.total_bytes_sent / self.transmission_time
+
+        print(f"Total bytes sent: {self.total_bytes_sent}")
+        print(f"Total time taken: {round(self.transmission_time, 2)} seconds")
+        print(f"Throughput: {round(self.throughput, 2)} bytes/second")
 
     def wait_for_ack(self):
         try:

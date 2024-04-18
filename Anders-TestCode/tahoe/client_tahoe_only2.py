@@ -1,6 +1,7 @@
 import socket
 import sys
 import random
+import time
 from time import sleep
 from colorama import Fore, Style
 
@@ -21,8 +22,14 @@ class TCPClient:
         self.congestion_detected = False
         self.packets_sent = 0
         self.packets_lost = 0
+        self.start_time = 0
+        self.end_time = 0
+        self.total_bytes_sent = 0
 
     def send_file(self):
+        self.start_time = time.time()  # Record start time
+        self.total_bytes_sent = 0
+
         with open(self.filename, 'rb') as file:
             data = file.read()
             total_segments = len(data) // self.packet_size + (len(data) % self.packet_size != 0)
@@ -37,6 +44,7 @@ class TCPClient:
                 if random.randint(0, 10) < 9:
                     self.client_socket.send(packet)
                     self.packets_sent += 1
+                    self.total_bytes_sent += len(segment)
                     print(Fore.LIGHTGREEN_EX + f"Sent packet SEQ: {self.seq_number}" + Style.RESET_ALL)
 
                     # Adjust congestion window
@@ -61,6 +69,14 @@ class TCPClient:
                     idx_packet = idx_packet - self.cwnd + 1 if idx_packet > 0 else 0
                     self.packets_lost += 1
                     print(f"Setting sshtresh to: {self.ssthresh} and cwnd to: {self.cwnd} due to timeout or incorrect ACK.")
+
+        self.end_time = time.time()  # Record end time
+        self.transmission_time = self.end_time - self.start_time
+        self.throughput = self.total_bytes_sent / self.transmission_time
+
+        print(f"Total bytes sent: {self.total_bytes_sent}")
+        print(f"Total time taken: {round(self.transmission_time, 2)} seconds")
+        print(f"Throughput: {round(self.throughput, 2)} bytes/second")
 
     def wait_for_ack(self):
         try:
@@ -99,7 +115,7 @@ class TCPClient:
     def close(self):
         self.client_socket.close()
         print("Total packets sent: ", self.packets_sent, " Total packets lost: ", self.packets_lost)
-        print("Goodput: ", self.packets_sent - self.packets_lost, "/", self.packets_sent, "|", (self.packets_sent - self.packets_lost) / self.packets_sent * 100, "%)")
+        print("Goodput: ", self.packets_sent - self.packets_lost, "/", self.packets_sent, "|", round((self.packets_sent - self.packets_lost) / self.packets_sent * 100, 2), "%)")
         print(Fore.CYAN + "Connection closed with server." + Style.RESET_ALL)
         
 
@@ -110,4 +126,5 @@ if __name__ == "__main__":
     filename = sys.argv[1]
     client = TCPClient(filename)
     client.send_file()
+    
     client.close()
