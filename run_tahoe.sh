@@ -7,7 +7,7 @@ print_separator() {
 
 # Start the server
 print_separator
-echo "Starting server..."
+echo "Starting Tahoe server..."
 python3 ./tahoe-final/server_tahoe_only.py &
 server_pid=$!
 
@@ -16,10 +16,10 @@ sleep 2
 
 # Run the client
 print_separator
-echo "Running client..."
+echo "Running Tahoe client..."
 python3 ./tahoe-final/client_tahoe-only2.py
 
 # Stop the server after the client finishes
 print_separator
-echo "Stopping server..."
+echo "Stopping Tahoe server..."
 kill $server_pid
