@@ -19,6 +19,8 @@ class TCPClient:
         self.packet_size = 1024
         self.dup_ack_count = 0
         self.congestion_detected = False
+        self.packets_sent = 0
+        self.packets_lost = 0
 
     def send_file(self):
         with open(self.filename, 'rb') as file:
@@ -34,6 +36,7 @@ class TCPClient:
                 packet = f"SEQ:{self.seq_number}|ACK:{self.ack_number}|DATA:".encode() + segment
                 if random.randint(0, 10) < 9:
                     self.client_socket.send(packet)
+                    self.packets_sent += 1
                     print(Fore.LIGHTGREEN_EX + f"Sent packet SEQ: {self.seq_number}" + Style.RESET_ALL)
 
                     # Adjust congestion window
@@ -45,6 +48,7 @@ class TCPClient:
                         print(f"Congestion avoidance, cwnd: {self.cwnd}, ssthresh: {self.ssthresh}")
                 else:
                     print(Fore.YELLOW + f"Packet loss, packet with SEQ: {self.seq_number} lost in transit." + Style.RESET_ALL)
+                    self.packets_lost += 1
                     sleep(2)  # Simulate packet loss
                     continue  # Skip updating cwnd and ssthresh on packet loss
 
@@ -55,6 +59,7 @@ class TCPClient:
                     self.ssthresh = max(self.cwnd // 2, 1)  # Set slow start threshold to half of current cwnd
                     self.cwnd = 1
                     idx_packet = idx_packet - self.cwnd + 1 if idx_packet > 0 else 0
+                    self.packets_lost += 1
                     print(f"Setting sshtresh to: {self.ssthresh} and cwnd to: {self.cwnd} due to timeout or incorrect ACK.")
 
     def wait_for_ack(self):
@@ -93,7 +98,10 @@ class TCPClient:
 
     def close(self):
         self.client_socket.close()
-        print("Connection closed.")
+        print("Total packets sent: ", self.packets_sent, " Total packets lost: ", self.packets_lost)
+        print("Goodput: ", self.packets_sent - self.packets_lost, "/", self.packets_sent, "|", (self.packets_sent - self.packets_lost) / self.packets_sent * 100, "%)")
+        print(Fore.CYAN + "Connection closed with server." + Style.RESET_ALL)
+        
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
