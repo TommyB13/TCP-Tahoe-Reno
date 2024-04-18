@@ -1,0 +1,3 @@
+We ran Tahoe and Reno 10 times each with lorem_ipsum.txt and took the average throughput and goodput as shown in Picture1 and Picture2 respectively. These graphs show Reno having a higher throughput and a higher goodput on average than Tahoe.
+
+We also ran Tahoe and Reno 10 more times each, this time with lorem_ipsum2.txt which is larger than lorem_ipsum.txt, and took the average throughput and goodput for each as shown in Picture3 and Picture4 respectively. These graphs show the same trend of Reno having a higher throughput and a higher goodput on average than Tahoe.
