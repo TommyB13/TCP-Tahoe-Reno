@@ -9,7 +9,7 @@ class TCPClient:
     def __init__(self, filename):
         self.filename = filename
         self.host = "localhost"
-        self.port = 3021
+        self.port = 3022
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((self.host, self.port))
         self.seq_number = 0
