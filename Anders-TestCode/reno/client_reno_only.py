@@ -114,7 +114,7 @@ class TCPClient:
     def close(self):
         self.client_socket.close()
         print("Total packets sent: ", self.packets_sent, " Total packets lost: ", self.packets_lost)
-        print("Goodput: ", self.packets_sent - self.packets_lost, "/", self.packets_sent, "|", (self.packets_sent - self.packets_lost) / self.packets_sent * 100, "%)")
+        print("Goodput: ", self.packets_sent - self.packets_lost, "/", self.packets_sent, "|", round((self.packets_sent - self.packets_lost) / self.packets_sent * 100, 2), "%)")
         print(Fore.CYAN + "Connection closed with server." + Style.RESET_ALL)
 
 if __name__ == "__main__":
