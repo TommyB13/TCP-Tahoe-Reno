@@ -1,7 +1,8 @@
 import socket
 import sys
 import random
-import threading
+from time import sleep
+from colorama import Fore, Back, Style
 
 class TCPClient:
     def __init__(self, filename):
@@ -18,8 +19,6 @@ class TCPClient:
         self.packet_size = 1024
         self.dup_ack_count = 0
         self.congestion_detected = False
-        self.sent_packets = {}  # Dictionary to store sent packets and their associated timers
-        self.lock = threading.Lock()
 
     def send_file(self):
         with open(self.filename, 'rb') as file:
@@ -33,20 +32,31 @@ class TCPClient:
                 segment = data[start:end]
                 self.seq_number = end
                 packet = f"SEQ:{self.seq_number}|ACK:{self.ack_number}|DATA:".encode() + segment
-                
-                # Send packet and start timer
-                self.client_socket.send(packet)
-                self.lock.acquire()
-                self.sent_packets[self.seq_number] = threading.Timer(self.timeout, self.handle_timeout, args=[self.seq_number, packet])
-                self.sent_packets[self.seq_number].start()
-                self.lock.release()
-                print(f"Sent packet SEQ: {self.seq_number}")
-                
-                idx_packet += 1  # Move to the next segment
+                if(random.randint(0, 10) < 9):
+                    self.client_socket.send(packet)
+                    print(Fore.LIGHTGREEN_EX + f"Sent packet SEQ: {self.seq_number}" + Style.RESET_ALL)
 
-        # Wait for ACKs of all sent packets before closing connection
-        for seq_number, timer in self.sent_packets.items():
-            timer.join()
+                    # Adjust congestion window
+                    if self.cwnd < self.ssthresh:
+                        self.cwnd *= 2  # Exponential increase during slow start
+                        print(f"Slow start, cwnd: {self.cwnd}, ssthresh: {self.ssthresh}")
+                    else:
+                        self.cwnd += 1  # Incremental increase during congestion avoidance
+                        print(f"Congestion avoidance, cwnd: {self.cwnd}, ssthresh: {self.ssthresh}")
+                else:
+                    print(Fore.YELLOW + f"Packet loss, packet with SEQ: {self.seq_number} lost in transit." + Style.RESET_ALL)
+                    sleep(2)  # Simulate packet loss
+                    continue  # Skip updating cwnd and ssthresh on packet loss
+
+                if self.wait_for_ack():
+                    print(Fore.LIGHTGREEN_EX + f"Received correct ACK: {self.ack_number}" + Style.RESET_ALL)
+                    idx_packet += 1  # Successfully move to the next segment
+                else:
+                    self.ssthresh = max(self.cwnd / 2, 1) # Set slow start threshold to half of current cwnd
+                    self.cwnd = 1
+                    idx_packet = idx_packet - self.cwnd + 1 if idx_packet > 0 else 0
+                    print(f"Setting sshtresh to: {self.ssthresh} and cwnd to: {self.cwnd} due to timeout or incorrect ACK.")
+
 
     def wait_for_ack(self):
         try:
@@ -75,28 +85,14 @@ class TCPClient:
                 print(f"Received insufficient ACK: {ack_num}, expected at least: {self.seq_number}")
                 
         except socket.timeout:
-            print('Timeout, resending last packet with SEQ:', self.seq_number)
+            print(Fore.YELLOW + f'Timeout, resending last packet with SEQ: {self.seq_number}' + Style.RESET_ALL)
         except ValueError:
-            print('Failed to convert ACK to integer.')
+            print(Fore.YELLOW + f'Failed to convert ACK to integer.' + Style.RESET_ALL)
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(Fore.YELLOW + f"Unexpected error: {e}" + Style.RESET_ALL)
         return False
 
-    def handle_timeout(self, seq_number, packet):
-        print(f"Timeout occurred for packet with SEQ: {seq_number}. Retransmitting...")
-        # Resend packet
-        self.client_socket.send(packet)
-        # Restart timer
-        self.lock.acquire()
-        self.sent_packets[seq_number].cancel()
-        self.sent_packets[seq_number] = threading.Timer(self.timeout, self.handle_timeout, args=[seq_number, packet])
-        self.sent_packets[seq_number].start()
-        self.lock.release()
-
     def close(self):
-        # Cancel all timers
-        for seq_number, timer in self.sent_packets.items():
-            timer.cancel()
         self.client_socket.close()
         print("Connection closed.")
 

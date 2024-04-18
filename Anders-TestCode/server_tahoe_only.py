@@ -1,5 +1,6 @@
 import socket
 import random
+from colorama import Fore, Back, Style
 
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,7 +11,7 @@ def main():
     print(f'Server is ready to receive on port {server_port}')
     while True:
         connection_socket, addr = server_socket.accept()
-        print(f'Connection established with {addr}')
+        print(Fore.CYAN + f'Connection established with {addr}' + Style.RESET_ALL)
         
         try:
             cwnd = 1  # Initialize congestion window
@@ -31,15 +32,15 @@ def main():
                     # Write received data into the file
                     file.write(data_content)
                     
-                    print(f"Received packet with SEQ: {seq_num}", flush=True)
+                    print(Fore.LIGHTGREEN_EX + f"Received packet with SEQ: {seq_num}" + Style.RESET_ALL, flush=True )
                     ack_response = seq_num + len(data_content)
                     
                     # Simulate packet loss with probability 20%
                     if (random.randint(0, 10) < 9):
                         connection_socket.send(f"SEQ:{seq_num}|ACK:{ack_response}|DATA:".encode())
-                        print(f"Sent ACK: {ack_response}", flush=True)
+                        print(Fore.LIGHTGREEN_EX + f"Sent ACK: {ack_response}" + Style.RESET_ALL, flush=True)
                     else:
-                        print(f"Packet loss, no ACK sent with ACK {ack_response}", flush=True)
+                        print(Fore.YELLOW + f"Packet loss, no ACK sent with ACK {ack_response}" + Style.RESET_ALL, flush=True)
                         continue  # Skip updating cwnd and ssthresh on packet loss
                     
                     # Congestion control
@@ -77,12 +78,9 @@ def main():
                         duplicate_ack_count = 0  # Reset duplicate ACK count if the ACK is not a duplicate
 
 
-                    
-                    
-                    
         finally:
             connection_socket.close()
-            print("Connection closed with client.")
+            print(Fore.CYAN + "Connection closed with client." + Style.RESET_ALL)
 
     server_socket.close()
 
