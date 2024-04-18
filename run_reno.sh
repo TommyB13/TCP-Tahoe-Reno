@@ -17,7 +17,7 @@ sleep 2
 # Run the Reno client
 print_separator
 echo "Running Reno client..."
-python3 ./reno-final/client_reno-only.py
+python3 ./reno-final/client_reno_only.py ./inputs/lorem_ipsum.txt
 
 # Stop the Reno server after the client finishes
 print_separator

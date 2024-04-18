@@ -17,7 +17,7 @@ sleep 2
 # Run the client
 print_separator
 echo "Running Tahoe client..."
-python3 ./tahoe-final/client_tahoe-only2.py
+python3 ./tahoe-final/client_tahoe_only2.py ./inputs/lorem_ipsum.txt
 
 # Stop the server after the client finishes
 print_separator
