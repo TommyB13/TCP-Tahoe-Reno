@@ -17,7 +17,7 @@ sleep 2
 # Run the client
 print_separator
 echo "Running Tahoe sender..."
-python3 ./tahoe-final/sender_tahoe_only2.py ./inputs/lorem_ipsum.txt
+python3 ./tahoe-final/sender_tahoe_only.py ./inputs/lorem_ipsum.txt
 
 # Stop the receiver after the sender finishes
 print_separator
