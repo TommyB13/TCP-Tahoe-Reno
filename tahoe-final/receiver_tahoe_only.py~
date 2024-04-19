@@ -4,7 +4,7 @@ from colorama import Fore, Back, Style
 
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_port = 3021
+    server_port = 3022
     server_socket.bind(('', server_port))
     server_socket.listen(5)
     
