@@ -5,21 +5,21 @@ print_separator() {
     echo "====================="
 }
 
-# Start the server
+# Start the receiver
 print_separator
-echo "Starting Tahoe server..."
-python3 ./tahoe-final/server_tahoe_only.py &
-server_pid=$!
+echo "Starting Tahoe receiver..."
+python3 ./tahoe-final/receiver_tahoe_only.py &
+receiver_pid=$!
 
-# Wait for a moment to ensure server startup
+# Wait for a moment to ensure receiver startup
 sleep 2
 
 # Run the client
 print_separator
-echo "Running Tahoe client..."
-python3 ./tahoe-final/client_tahoe_only2.py ./inputs/lorem_ipsum.txt
+echo "Running Tahoe sender..."
+python3 ./tahoe-final/sender_tahoe_only2.py ./inputs/lorem_ipsum.txt
 
-# Stop the server after the client finishes
+# Stop the receiver after the sender finishes
 print_separator
-echo "Stopping Tahoe server..."
-kill $server_pid
+echo "Stopping Tahoe receiver..."
+kill $receiver_pid
